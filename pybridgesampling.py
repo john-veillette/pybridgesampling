@@ -63,7 +63,7 @@ class Reshaper:
             try: # making sure that everything you need is in the trace
                 assert(v in list(trace.posterior.data_vars.keys()))
             except:
-                raise Exception('%s missing from trace. Did you set `idata_kwargs = dict(include_transformed = True)` in `pm.sample`?'%s)
+                raise Exception('%s missing from trace. Did you set `idata_kwargs = dict(include_transformed = True)` in `pm.sample`?'%v)
 
     def to_array(self, trace):
         '''
