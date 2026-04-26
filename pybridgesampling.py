@@ -2,6 +2,7 @@ from scipy.linalg import lstsq
 from statsmodels.tsa.ar_model import AutoReg as AR
 from statsmodels.tsa.ar_model import ar_select_order
 from scipy.stats import multivariate_normal as mvnorm
+from scipy.special import logsumexp
 
 import numpy as np
 import pymc as pm
@@ -28,12 +29,14 @@ def iterative_scheme(q11, q12, q21, q22, r0, neff, N1, N2, tol, maxiter, criteri
     while (i <= maxiter) & (criterion_val > tol):
         rold = r
         logmlold = logml
-        numi = np.exp(l2 - lstar)/(s1 * np.exp(l2 - lstar) + s2 * r)
-        deni = 1/(s1 * np.exp(l1 - lstar) + s2 * r)
+        log_numi = (l2 - lstar) - np.logaddexp(np.log(s1) + l2 - lstar, np.log(s2) + np.log(r))
+        numi = np.exp(log_numi)
+        log_deni = -np.logaddexp(np.log(s1) + l1 - lstar, np.log(s2) + np.log(r))
+        deni = np.exp(log_deni)
         if np.sum(~np.isfinite(numi))+np.sum(~np.isfinite(deni)) > 0:
             warnings.warn("""Infinite value in iterative scheme, returning NaN.
             Try rerunning with more samples.""")
-        r = (N1/N2) * np.sum(numi)/np.sum(deni)
+        r = (N1/N2) * np.exp(logsumexp(log_numi) - logsumexp(log_deni))
         r_vals.append(r)
         logml = np.log(r) + lstar
         i += 1
