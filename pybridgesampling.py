@@ -7,6 +7,7 @@ from scipy.special import logsumexp
 import numpy as np
 import pymc as pm
 import arviz as az
+import warnings
 
 def iterative_scheme(q11, q12, q21, q22, r0, neff, N1, N2, tol, maxiter, criterion):
     '''
@@ -30,13 +31,11 @@ def iterative_scheme(q11, q12, q21, q22, r0, neff, N1, N2, tol, maxiter, criteri
         rold = r
         logmlold = logml
         log_numi = (l2 - lstar) - np.logaddexp(np.log(s1) + l2 - lstar, np.log(s2) + np.log(r))
-        numi = np.exp(log_numi)
         log_deni = -np.logaddexp(np.log(s1) + l1 - lstar, np.log(s2) + np.log(r))
-        deni = np.exp(log_deni)
-        if np.sum(~np.isfinite(numi))+np.sum(~np.isfinite(deni)) > 0:
+        r = (N1/N2) * np.exp(logsumexp(log_numi) - logsumexp(log_deni))
+        if not np.isfinite(r):
             warnings.warn("""Infinite value in iterative scheme, returning NaN.
             Try rerunning with more samples.""")
-        r = (N1/N2) * np.exp(logsumexp(log_numi) - logsumexp(log_deni))
         r_vals.append(r)
         logml = np.log(r) + lstar
         i += 1
